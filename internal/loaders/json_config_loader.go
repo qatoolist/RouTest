@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/qatoolist/RouTest/models"
+	"github.com/qatoolist/RouTest/internal/models"
 )
 
 // JSONConfigLoader is a ConfigLoader implementation that loads configuration

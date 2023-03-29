@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/qatoolist/RouTest/models"
+	"github.com/qatoolist/RouTest/internal/models"
 )
 
 // ConfigLoader is an interface that defines the LoadConfig method for loading
@@ -88,8 +88,11 @@ func ConfigLoaderFactory(env string, path string) (ConfigLoader, error) {
 				return &ConfigLoaderImpl{".json", loader}, nil
 			}
 		case *YAMLConfigLoader:
-			if _, err := os.Stat(path + "/" + runEnv + ".yaml"); err == nil || _, err := os.Stat(path + "/" + runEnv + ".yml"); err == nil {
+			if _, err := os.Stat(path + "/" + runEnv + ".yaml"); err == nil {
 				return &ConfigLoaderImpl{".yaml", loader}, nil
+			}
+			if _, err := os.Stat(path + "/" + runEnv + ".yml"); err == nil {
+				return &ConfigLoaderImpl{".yml", loader}, nil
 			}
 		case *ENVConfigLoader:
 			if _, err := os.Stat(path + "/" + runEnv + ".env"); err == nil {
@@ -102,8 +105,7 @@ func ConfigLoaderFactory(env string, path string) (ConfigLoader, error) {
 	return nil, fmt.Errorf("no loader found for environment %s", runEnv)
 }
 
-
-/* Example - 
+/* Example -
 func main() {
 	// Specify the environment and config directory
 	env := "dev"

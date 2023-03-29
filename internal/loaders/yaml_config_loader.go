@@ -10,7 +10,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/qatoolist/RouTest/models"
+	"github.com/qatoolist/RouTest/internal/models"
 )
 
 // YAMLConfigLoader is a ConfigLoader implementation that loads configuration
