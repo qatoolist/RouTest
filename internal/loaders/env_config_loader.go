@@ -11,7 +11,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/qatoolist/RouTest/models"
+	"github.com/qatoolist/RouTest/internal/models"
 )
 
 // ENVConfigLoader is a ConfigLoader implementation that loads configuration

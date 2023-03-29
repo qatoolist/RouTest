@@ -2,90 +2,95 @@ package models
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"io/ioutil"
 	"net/http"
 )
 
+// Response represents the HTTP response and its attributes.
 type Response struct {
+	// StatusCode is the HTTP status code of the response.
 	StatusCode int
-	Status     string
-	Proto      string
-	ProtoMajor int
-	ProtoMinor int
-	Header     Header
-	Body       []byte
+
+	// Status is the HTTP status message of the response.
+	Status string
+
+	// Parameters is a collection of parameters associated with the response.
+	Parameters Parameters
+
+	// Body is the body of the response.
+	Body []byte
 }
 
-func ToModelHeader(h http.Header) Header {
-	header := Header{}
-	for key, values := range h {
-		header[key] = values
+// NewResponse creates a new instance of the Response struct with default values for its fields.
+func NewResponse(rbs ResponseBodySchema) (*Response, error) {
+	resp := &Response{
+		StatusCode: -1,
+		Status:     "",
+		Body:       nil,
 	}
-	return header
+	return resp, nil
 }
 
-func NewResponse(httpResp *http.Response) (*Response, error) {
-	bodyBytes, err := ioutil.ReadAll(httpResp.Body)
+// HandleResponse handles the HTTP response and returns the Response object.
+func HandleResponse(httpResp *http.Response) (*Response, error) {
+	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
 
-	return &Response{
+	resp := &Response{
 		StatusCode: httpResp.StatusCode,
 		Status:     httpResp.Status,
-		Proto:      httpResp.Proto,
-		ProtoMajor: httpResp.ProtoMajor,
-		ProtoMinor: httpResp.ProtoMinor,
-		Header:     ToModelHeader(httpResp.Header),
-		Body:       bodyBytes,
-	}, nil
+		Body:       body,
+	}
+
+	resp.Parameters = Parameters{}
+	resp.Parameters.AddParameter(Parameter{
+		HeaderParameter: ParameterType{
+			Key:   "Content-Type",
+			Value: httpResp.Header.Get("Content-Type"),
+		},
+	})
+
+	resp.Parameters.ToModelResponse(httpResp)
+
+	return resp, nil
 }
 
-// String returns the response as a string.
+// String returns the response body as a string.
 func (r *Response) String() string {
 	return string(r.Body)
 }
 
-// JSON parses the response body as a JSON object and returns it.
-func (r *Response) JSON(v interface{}) (interface{}, error) {
-	err := json.Unmarshal(r.Body, v)
-	if err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// XML parses the response as an XML object and returns it.
-func (r *Response) XML(v interface{}) (interface{}, error) {
-	err := xml.Unmarshal(r.Body, v)
-	if err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// Bytes returns the response as a byte slice.
+// Bytes returns the response body as a byte slice.
 func (r *Response) Bytes() []byte {
 	return r.Body
 }
 
 // HeaderValue returns the value of the specified header.
-func (r *Response) HeaderValue(key string) string {
-	return r.Header.Get(key)
+func (r *Response) HeaderValue(key string) (string, error) {
+	return r.Parameters.GetParameterByKey(key, "Header")
+}
+
+// ContentType returns the Content-Type header value.
+func (r *Response) ContentType() (string, error) {
+	return r.HeaderValue("Content-Type")
+}
+
+// IsSuccess returns true if the response status code indicates success.
+func (r *Response) IsSuccess() bool {
+	return r.StatusCode >= 200 && r.StatusCode < 300
 }
 
 // SetHeaderValue sets the value of the specified header.
 func (r *Response) SetHeaderValue(key, value string) {
-	r.Header.Set(key, value)
+	headerParam, err := NewParameter("Header", key, value)
+	if err == nil {
+		r.Parameters.AddParameter(*headerParam)
+	}
 }
 
-// AddHeaderValue adds a value to the specified header.
-func (r *Response) AddHeaderValue(key, value string) {
-	r.Header.Add(key, value)
-}
-
+// ValidateBody validates the response body against the schema.
 func (r *Response) ValidateBody(schema *ResponseBodySchema) error {
 	var data interface{}
 

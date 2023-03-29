@@ -1,5 +1,6 @@
 package models
 
+// Requirements is a map of Requirement objects, indexed by their name.
 type Requirements map[string]Requirement
 
 // AddRequirement adds a new requirement to the Requirements map.

@@ -1,9 +1,15 @@
 package models
 
+// Requirement represents a single requirement.
 type Requirement struct {
-	Summary  string   `json:"summary"`
-	Priority string   `json:"priority"`
-	Links    []string `json:"links"`
+	// Summary provides a brief summary of the requirement.
+	Summary string `json:"summary"`
+
+	// Priority specifies the priority of the requirement.
+	Priority string `json:"priority"`
+
+	// Links provides links to resources related to the requirement.
+	Links []string `json:"links"`
 }
 
 // GetPriority returns the priority of the requirement.
