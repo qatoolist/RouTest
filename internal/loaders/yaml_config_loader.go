@@ -9,8 +9,6 @@ import (
 	"os"
 
 	"gopkg.in/yaml.v3"
-
-	"github.com/qatoolist/RouTest/internal/models"
 )
 
 // YAMLConfigLoader is a ConfigLoader implementation that loads configuration
@@ -20,7 +18,7 @@ type YAMLConfigLoader struct{}
 // LoadConfig loads the configuration data for the specified environment from
 // a YAML file located at the specified path. The file should be named
 // "<env>.yaml". If the file does not exist, an error is returned.
-func (l *YAMLConfigLoader) LoadConfig(env string, path string) (*models.Config, error) {
+func (l *YAMLConfigLoader) LoadConfig(env string, path string) (*Config, error) {
 	filename := env + ".yaml"
 	filepath := path + "/" + filename
 
@@ -40,7 +38,7 @@ func (l *YAMLConfigLoader) LoadConfig(env string, path string) (*models.Config, 
 	}
 
 	// Unmarshal the YAML data into the Config map
-	var config models.Config
+	var config Config
 	err = yaml.Unmarshal(contents, &config)
 	if err != nil {
 		return nil, err

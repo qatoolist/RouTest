@@ -10,8 +10,6 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
-
-	"github.com/qatoolist/RouTest/internal/models"
 )
 
 // ENVConfigLoader is a ConfigLoader implementation that loads configuration
@@ -21,7 +19,7 @@ type ENVConfigLoader struct{}
 // LoadConfig loads the configuration data for the specified environment from
 // a .env file located at the specified path. The file should be named
 // "<env>.env". If the file does not exist, an error is returned.
-func (l *ENVConfigLoader) LoadConfig(env string, path string) (*models.Config, error) {
+func (l *ENVConfigLoader) LoadConfig(env string, path string) (*Config, error) {
 	filename := env + ".env"
 	filepath := path + "/" + filename
 
@@ -41,7 +39,7 @@ func (l *ENVConfigLoader) LoadConfig(env string, path string) (*models.Config, e
 	}
 
 	// Parse the environment variable configuration data into the Config map
-	config := make(models.Config)
+	config := make(Config)
 	for _, envVar := range os.Environ() {
 		parts := strings.SplitN(envVar, "=", 2)
 		if len(parts) != 2 {

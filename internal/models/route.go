@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/qatoolist/RouTest/internal/interfaces"
 )
 
 // Route represents a custom HTTP request with additional fields.
@@ -11,11 +13,24 @@ type Route struct {
 	// Info contains the request information.
 	Info Info
 
+	// ParentRoute provides the reference to the parent route.
+	ParentApplication interfaces.Application
+
 	// Meta contains the metadata about the route.
-	Meta Meta
+	Meta interfaces.Meta
 
 	// Scenario contains the scenario that should be executed for the route.
-	Scenario Scenario
+	ScenarioRegistry interfaces.ScenarioRegistry
+
+	// RouteParametersRegistry are the route level parameters and
+	// These Parameters are available through all scenarios registered under this route
+	// But can be overriden by providing the scenario level parameters having same keys.
+	RouteParametersRegistry interfaces.ParametersRegistry
+
+	// RouteHooksRegistry is a registry of Before and After Hooks defined at route level
+	// The Before Hooks are triggered for every scenario of every route defined under this application
+	// The Order of Hooks Execution is -  BeforeApplicationHooks, BeforeRouteHooks, BeforeScenarioHooks
+	RouteHooksRegistry interfaces.HooksRegistry
 
 	// Body is the request body.
 	Body []byte
@@ -24,24 +39,13 @@ type Route struct {
 	Response <-chan *http.Response
 }
 
-// NewRoute creates a new instance of the Route struct with default values for its fields.
-func NewRoute() *Route {
-	return &Route{
-		Info:     Info{},
-		Meta:     Meta{},
-		Scenario: Scenario{},
-		Body:     []byte{},
-		Response: nil,
-	}
-}
-
 // SetReqBodySchema sets the request body schema for the route.
 func (r *Route) SetReqBodySchema(schema string) error {
 	reqBodySchema, err := NewRequestBodySchema(schema)
 	if err != nil {
 		return err
 	}
-	r.Info.RequestBodySchema = *reqBodySchema
+	r.Info.SetRequestBodySchema(reqBodySchema)
 	return nil
 }
 
@@ -51,37 +55,35 @@ func (r *Route) SetResBodySchema(schema string) error {
 	if err != nil {
 		return err
 	}
-	r.Info.ResponseBodySchema = *resBodySchema
+	r.Info.SetResponseBodySchema(resBodySchema)
 	return nil
 }
 
 // ValidateReqBody validates the request body against the request body schema.
 func (r *Route) ValidateReqBody(body interface{}) error {
-	if r.Info.RequestBodySchema == (RequestBodySchema{}) {
+	if r.Info.GetRequestBodySchema() == interfaces.RequestBodySchema(&RequestBodySchema{}) {
 		return nil
 	}
-	return r.Info.RequestBodySchema.Validate(body)
+	return r.Info.GetRequestBodySchema().Validate(body)
 }
 
 // ValidateResBody validates the response body against the response body schema.
 func (r *Route) ValidateResBody(body interface{}) error {
-	if r.Info.ResponseBodySchema == (ResponseBodySchema{}) {
+	if r.Info.GetResponseBodySchema() == interfaces.ResponseBodySchema(&ResponseBodySchema{}) {
 		return nil
 	}
-	return r.Info.ResponseBodySchema.Validate(body)
+	return r.Info.GetResponseBodySchema().Validate(body)
 }
 
 // Send sends the HTTP request and returns the HTTP response.
 func (r *Route) Send() (*http.Response, error) {
 	client := http.DefaultClient
-	req, err := http.NewRequest(r.Info.Method.String(), r.Info.Path, bytes.NewReader(r.Body))
+	req, err := http.NewRequest(r.Info.GetMethod().String(), r.Info.GetPath(), bytes.NewReader(r.Body))
 	if err != nil {
 		return nil, err
 	}
 
-	r.Info.Params.AddHeaderToRequest(req)
-
-	if r.Info.RequestBodySchema != (RequestBodySchema{}) {
+	if r.Info.GetRequestBodySchema() != interfaces.RequestBodySchema(&RequestBodySchema{}) {
 		err := r.ValidateReqBody(req.Body)
 		if err != nil {
 			return nil, err
@@ -91,7 +93,7 @@ func (r *Route) Send() (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	if r.Info.ResponseBodySchema != (ResponseBodySchema{}) {
+	if r.Info.GetResponseBodySchema() != interfaces.ResponseBodySchema(&ResponseBodySchema{}) {
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -104,4 +106,24 @@ func (r *Route) Send() (*http.Response, error) {
 		resp.Body = ioutil.NopCloser(bytes.NewReader(body))
 	}
 	return resp, nil
+}
+
+func (r *Route) GetScenarioRegistry() interfaces.ScenarioRegistry {
+	return r.ScenarioRegistry
+}
+
+func (r *Route) GetRouteParametersRegistry() interfaces.ParametersRegistry {
+	return r.RouteParametersRegistry
+}
+
+func (r *Route) GetRouteHooksRegistry() interfaces.HooksRegistry {
+	return r.RouteHooksRegistry
+}
+
+func (r *Route) GetParentApplication() interfaces.Application {
+	return r.ParentApplication
+}
+
+func (r *Route) GetName() string {
+	return r.Info.GetName()
 }
