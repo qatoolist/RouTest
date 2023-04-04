@@ -8,8 +8,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
-
-	"github.com/qatoolist/RouTest/internal/models"
 )
 
 // JSONConfigLoader is a ConfigLoader implementation that loads configuration
@@ -19,7 +17,7 @@ type JSONConfigLoader struct{}
 // LoadConfig loads the configuration data for the specified environment from
 // a JSON file located at the specified path. The file should be named
 // "<env>.json". If the file does not exist, an error is returned.
-func (l *JSONConfigLoader) LoadConfig(env string, path string) (*models.Config, error) {
+func (l *JSONConfigLoader) LoadConfig(env string, path string) (*Config, error) {
 	filename := env + ".json"
 	filepath := path + "/" + filename
 
@@ -39,7 +37,7 @@ func (l *JSONConfigLoader) LoadConfig(env string, path string) (*models.Config, 
 	}
 
 	// Unmarshal the JSON data into the Config map
-	var config models.Config
+	var config Config
 	err = json.Unmarshal(contents, &config)
 	if err != nil {
 		return nil, err

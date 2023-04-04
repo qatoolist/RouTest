@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/qatoolist/RouTest/internal/models"
 )
 
 // ConfigLoader is an interface that defines the LoadConfig method for loading
 // configuration data from various sources.
 type ConfigLoader interface {
-	LoadConfig(env string, path string) (*models.Config, error)
+	LoadConfig(env string, path string) (*Config, error)
 }
 
 // ConfigLoaderImpl is an implementation of the ConfigLoader interface that loads
@@ -26,7 +24,7 @@ type ConfigLoaderImpl struct {
 // a file located at the specified path. The file should be named
 // "<env>.json", "<env>.yaml", or "<env>.env" depending on the file format.
 // If the file does not exist, an error is returned.
-func (l *ConfigLoaderImpl) LoadConfig(env string, path string) (*models.Config, error) {
+func (l *ConfigLoaderImpl) LoadConfig(env string, path string) (*Config, error) {
 	filename := env + l.extension
 	filepath := path + "/" + filename
 
